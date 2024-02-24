@@ -35,47 +35,61 @@ const Board = () => {
   const HandleChange = (e) => {
     const name = e.target.name;
     //if button is not displayed make the action
-    if (!played[name]) {
+    if (!played[name] && !roundWon) {
       if (player) {
-        setText({
-          ...text,
+        setText((prevText) => ({
+          ...prevText,
           [name]: "X",
-        });
+        }));
       } else {
-        setText({
-          ...text,
+        setText((prevText) => ({
+          ...prevText,
           [name]: "O",
-        });
+        }));
       }
       // display button
-      setPlayed({
-        ...played,
+      setPlayed((prevPlayed) => ({
+        ...prevPlayed,
         [name]: true,
-      });
+      }));
       setPlayer(!player);
-      if (computer) play();
     } else {
       setError("This place is fill already");
     }
   };
 
   const play = async () => {
-    console.log("play");
+    if (roundWon) {
+      return;
+    }
     let number;
+    let count = 0;
     do {
       number = Math.floor(Math.random() * 9) + 1;
+      count++;
+      if (count > 9) {
+        return;
+      }
     } while (text[`btn_${number}`] !== "");
     const t = "btn_" + number;
     setText((prevText) => ({
       ...prevText,
       [t]: "O",
     }));
-    setPlayed({
-      ...played,
+    setPlayed((prevPlayed) => ({
+      ...prevPlayed,
       [t]: true,
-    });
-    setPlayer(true);
+    }));
+    if (!roundWon) {
+      setPlayer(true);
+    }
   };
+
+  useEffect(() => {
+    if (!player && !roundWon && !draw && computer) {
+      play();
+    }
+  }, [player, roundWon, draw, computer]);
 
   useEffect(() => {
     const winningConditions = [
@@ -105,16 +119,14 @@ const Board = () => {
         break;
       }
     }
-  }, [roundWon, text]);
 
-  useEffect(() => {
     for (let i = 0; i < 10; i++) {
       const t1 = "btn_" + i;
       if (text[t1] === "") return;
     }
     setRoundWon(true);
     setDraw(true);
-  }, [text]);
+  }, [roundWon, text]);
 
   const reload = () => {
     setPlayer(true);
@@ -187,7 +199,7 @@ const Board = () => {
             {draw ? (
               <h2>Draw !</h2>
             ) : computer ? (
-              player ? (
+              !player ? (
                 <h2>Computer Won</h2>
               ) : (
                 <h2> player 1 won (X)</h2>
